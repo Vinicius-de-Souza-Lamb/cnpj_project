@@ -1,0 +1,5 @@
+services:
+  streamlit:
+    command: >
+      sh -lc 'cd /app && exec streamlit run utils/pages/geografia.py
+      --server.address 0.0.0.0 --server.port 8501'

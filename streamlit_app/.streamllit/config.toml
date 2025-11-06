@@ -1,0 +1,12 @@
+[server]
+headless = true
+port     = 8501
+enableCORS = false
+
+[theme]
+base      = "dark"
+primaryColor = "#21c0ff"
+font       = "sans serif"
+
+[client]
+toolbarMode = "minimal"

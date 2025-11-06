@@ -1,0 +1,42 @@
+name: CI
+
+# Roda em todo push ou pull‑request para a branch main
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest     # runner Linux que já vem com Docker
+
+    steps:
+      # 1 ▸ checkout do código
+      - uses: actions/checkout@v4
+
+      # 2 ▸ instala Python 3.11 e habilita cache pip
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # 3 ▸ instala dependências (Airflow, Streamlit, linter, testes)
+      - name: Instala dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r airflow/dags/requirements.txt
+          pip install -r streamlit_app/requirements.txt
+          pip install ruff pytest
+
+      # 4 ▸ lint com Ruff
+      - name: Lint (ruff)
+        run: ruff .
+
+      # 5 ▸ (opcional) testes — deixe ativo quando criá‑los
+      - name: Testes unitários
+        run: pytest -q || true   # remova “|| true” quando tiver testes de fato
+
+      # 6 ▸ build das imagens para garantir que os Dockerfiles compilam
+      - name: Build Docker images
+        run: docker compose -f compose.yaml build --quiet

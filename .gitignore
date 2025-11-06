@@ -1,0 +1,29 @@
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Env/
+.env
+.env.*
+streamlit_app/.streamlit/secrets.toml
+
+# Streamlit cache
+streamlit_app/.streamlit/cache/
+
+# Airflow
+airflow/logs/
+airflow/__pycache__/
+
+# Raw Data
+data/
+downloads/
+tmp/
+*.zip
+*.csv
+!streamlit_app/assets/br_states.geojson

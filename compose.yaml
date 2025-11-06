@@ -1,0 +1,145 @@
+# ---------------------------------------------------------------------
+# docker-compose.yml  –  Postgres + Airflow (web/scheduler) + Streamlit
+# Notes:
+# - Containers talk to Postgres via service name "postgres" (not localhost).
+# - Postgres data persists in the named volume "pgdata".
+# - Streamlit serves on http://localhost:8501 and runs utils/app.py.
+# ---------------------------------------------------------------------
+
+services:
+  # ───────────────────────────────────────────────────────────────────
+  # 1) PostgreSQL (persistent via named volume)
+  # ───────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15
+    container_name: de_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+      TZ: Etc/UTC
+    ports:
+      - "5432:5432"            # expose locally for admin tools (DBeaver etc.)
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:               # wait until db is ready before starting dependents
+      test: ["CMD-SHELL", "pg_isready -U airflow -d airflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # ───────────────────────────────────────────────────────────────────
+  # 2) Airflow Webserver
+  # ───────────────────────────────────────────────────────────────────
+  airflow-web:
+    build:
+      context: .
+      dockerfile: docker/airflow/Dockerfile
+    image: airflow-local:latest
+    container_name: de_airflow_web
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: webserver
+    environment:
+      # Core database connection for Airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__LOGGING__REMOTE_LOGGING: "False"
+
+      # Create admin user on first boot
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+
+      # App-level DB vars (if any custom code uses them)
+      HOST_POSTG: postgres
+      PORT_POSTG: 5432
+      USER_POSTG: airflow
+      PASSWORD_POSTG: airflow
+      DATABASE_POSTG: airflow
+
+      # Avoid compose warnings: set PYTHONPATH explicitly (no ${PYTHONPATH})
+      PYTHONPATH: /opt/airflow/dags:/opt/airflow/plugins
+      TZ: Etc/UTC
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/datasets:/opt/airflow/datasets
+    ports:
+      - "8080:8080"            # Airflow Web UI
+
+  # ───────────────────────────────────────────────────────────────────
+  # 3) Airflow Scheduler
+  # ───────────────────────────────────────────────────────────────────
+  airflow-scheduler:
+    image: airflow-local:latest
+    container_name: de_airflow_sched
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: scheduler
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__LOGGING__REMOTE_LOGGING: "False"
+
+      HOST_POSTG: postgres
+      PORT_POSTG: 5432
+      USER_POSTG: airflow
+      PASSWORD_POSTG: airflow
+      DATABASE_POSTG: airflow
+
+      PYTHONPATH: /opt/airflow/dags:/opt/airflow/plugins
+      TZ: Etc/UTC
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/datasets:/opt/airflow/datasets
+
+  # ───────────────────────────────────────────────────────────────────
+  # 4) Streamlit (serves http://localhost:8501)
+  #    - We mount ./streamlit_app over /app (dev mode). Ensure utils/app.py exists!
+  #    - We override the CMD to run that entrypoint explicitly.
+  # ───────────────────────────────────────────────────────────────────
+  streamlit:
+    build:
+      context: .
+      dockerfile: docker/streamlit/Dockerfile
+    image: portifolio_cnpj-streamlit:latest
+    container_name: de_streamlit
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # DB connection used by your Streamlit app (db.py reads these)
+      HOST_POSTG: postgres
+      PORT_POSTG: 5432
+      USER_POSTG: airflow
+      PASSWORD_POSTG: airflow
+      DATABASE_POSTG: airflow
+
+      # Streamlit runtime knobs
+      STREAMLIT_SERVER_HEADLESS: "true"
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
+      TZ: Europe/Paris
+    volumes:
+      - ./streamlit_app:/app
+    ports:
+      - "8501:8501"
+    command: >
+      streamlit run utils/app.py
+      --server.address 0.0.0.0
+      --server.port 8501
+
+# ─────────────────────────────────────────────────────────────────────
+# Named volumes (persist across container recreations)
+# ─────────────────────────────────────────────────────────────────────
+volumes:
+  pgdata:

@@ -1,0 +1,15 @@
+[theme]
+base="dark"
+primaryColor="#25c4e8"
+textColor="#fafafa"
+font="sans serif"
+
+[server]
+headless=true
+
+[client]
+showSidebarNavigation=true 
+
+[ui]
+hideTopRightConfig=true
+hideRuntime=true
