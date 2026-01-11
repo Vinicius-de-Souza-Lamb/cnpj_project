@@ -41,7 +41,7 @@ This repository is a **data factory** that turns those ZIPs into something usefu
 
 ---
 
-## 🎯 Why it matters (business value)
+## 🎯 Why it matters?
 
 A reliable CNPJ dataset supports real business use cases:
 
@@ -54,7 +54,7 @@ This project also demonstrates a **production-shaped mindset**: safe access, rep
 
 ---
 
-## ✅ What this project delivers
+## ✅ What this project delivers:
 
 - **End-to-end ETL:** download → unzip → staging → validate/transform → promote → consume
 - **Typed staging schema** (`temp_...`) aligned to official layouts
@@ -65,7 +65,7 @@ This project also demonstrates a **production-shaped mindset**: safe access, rep
 
 ---
 
-## 🧱 Stack (one line each)
+## 🧱 Stack:
 
 - **Docker Compose** — starts everything with one command  
 - **Apache Airflow** — orchestrates and schedules pipeline steps  
@@ -74,7 +74,7 @@ This project also demonstrates a **production-shaped mindset**: safe access, rep
 
 ---
 
-## 🗺️ Architecture (local)
+## 🗺️ Architecture (local):
 
 
 ### Components (what runs locally)
@@ -89,7 +89,7 @@ This project also demonstrates a **production-shaped mindset**: safe access, rep
 
 ---
 
-## 🔐 Security model (simple and real-world)
+## 🔐 Security model:
 
 This project follows a safe pattern: **one user writes, one user only reads**.
 
@@ -119,7 +119,7 @@ This project follows a safe pattern: **one user writes, one user only reads**.
 
 ---
 
-## 🧩 Database structure (staging vs curated)
+## 🧩 Database structure
 
 This project stores the CNPJ dataset in PostgreSQL using a **two-layer warehouse design**:
 
@@ -132,12 +132,12 @@ Staging tables are the **landing zone** for raw government files. They are **typ
 - prevents incomplete or broken loads from reaching BI/dashboard users
 
 ### 2) Curated / final layer (analytics-ready)
-After validation, data is **promoted** into curated tables and/or views designed for analytics:
+After validation, data is **promoted** into curated tables and/or views designed for **OLAP workloads** and fast **ad-hoc queries**:
 - consistent formats (dates, nulls, codes)
-- query-friendly structure
-- stable layer for dashboards and BI tools
+- query-friendly structure optimized for exploration and reporting
+- stable layer for dashboards and BI tools (no raw ingestion artifacts)
 
-Only this layer is consumed by the Streamlit app.
+Only this curated layer is consumed by the Streamlit app.
 
 ---
 
@@ -145,34 +145,32 @@ Only this layer is consumed by the Streamlit app.
 
 The staging schema mirrors the main “business entities” in the dataset:
 
-- **`TEMP_EMPRESAS`** — company-level information (one row per `cnpj_basico`)  
+- **`temp_empresas`** — company-level information (one row per `cnpj_basico`)  
   Example: corporate name, legal nature, company size/porte.
 
-- **`TEMP_ESTABELECIMENTO`** — establishment/unit information (HQ + branches)  
+- **`temp_estabelecimento`** — establishment/unit information (HQ + branches)  
   Example: address, state (**UF**), city/municipality, main CNAE, registration status.
 
-- **`TEMP_SOCIOS_ORIGINAL`** — partners/shareholders linked to each company  
+- **`temp_socios_original`** — partners/shareholders linked to each company  
   Example: partner name, qualification, entry date, country, representative.
 
-- **`TEMP_SIMPLES`** — SIMPLES/MEI tax regime flags and dates  
+- **`temp_simples`** — SIMPLES/MEI tax regime flags and dates  
   Example: whether the company opted into SIMPLES or MEI and when.
 
 ---
 
-### Reference tables (code-to-description dictionaries)
+### Reference tables
 
 Several columns in the dataset are “codes”. These reference tables translate them into human-readable descriptions:
 
-- **`TEMP_CNAE`** — economic activity codes and descriptions  
-- **`TEMP_MUNICIPIO`** — municipality codes and names  
-- **`TEMP_PAIS`** — country codes and names  
-- **`TEMP_MOTIVO`** — reason codes for registration status changes  
-- **`TEMP_NATUREZA_JURIDICA`** — legal nature codes and descriptions  
-- **`TEMP_QUALIFICACAO_SOCIO`** — partner qualification codes and descriptions
+- **`temp_cnae`** — economic activity codes and descriptions  
+- **`temp_municipio`** — municipality codes and names  
+- **`temp_pais`** — country codes and names  
+- **`temp_motivo`** — reason codes for registration status changes  
+- **`temp_natureza_juridica`** — legal nature codes and descriptions  
+- **`temp_qualificacao_socio`** — partner qualification codes and descriptions
 
----
-
-## 🗂️ Project tour (where things live)
+## 🗂️ Project tour:
 
 - **`compose.yaml`** / **`docker-compose.override.yml`** → local infrastructure (services, ports, volumes)
 - **`airflow/dags/`** → pipeline DAGs (download, ingest, process, cleanup)
@@ -322,7 +320,7 @@ erDiagram
   TEMP_SOCIOS_ORIGINAL }o--|| TEMP_QUALIFICACAO_SOCIO : qualificacao_socio
   TEMP_SOCIOS_ORIGINAL }o--|| TEMP_PAIS : pais
 ```
-## ✅ Mermaid (GitHub-safe): Pipeline flow
+## ✅ Pipeline flow:
 
 ```mermaid
 flowchart TB
