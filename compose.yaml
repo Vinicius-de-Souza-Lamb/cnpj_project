@@ -4,7 +4,18 @@
 # - Containers talk to Postgres via service name "postgres" (not localhost).
 # - Postgres data persists in the named volume "pgdata".
 # - Streamlit serves on http://localhost:8501 and runs utils/app.py.
+#
+# Local-dev / portfolio-friendly:
+# - Resource limits (CPU/RAM) to keep the stack laptop-safe.
+# - Docker log rotation to avoid unbounded disk usage.
 # ---------------------------------------------------------------------
+
+# Docker stdout/stderr log rotation (prevents huge json-file logs)
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
   # ───────────────────────────────────────────────────────────────────
@@ -14,6 +25,9 @@ services:
     image: postgres:15
     container_name: de_postgres
     restart: unless-stopped
+    logging: *default-logging
+    mem_limit: 1g
+    cpus: "1.0"
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -44,6 +58,10 @@ services:
       postgres:
         condition: service_healthy
     command: webserver
+    logging: *default-logging
+    mem_limit: 2g
+    mem_reservation: 512m
+    cpus: "1.5"
     environment:
       # Core database connection for Airflow
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
@@ -83,6 +101,10 @@ services:
       postgres:
         condition: service_healthy
     command: scheduler
+    logging: *default-logging
+    mem_limit: 2g
+    mem_reservation: 512m
+    cpus: "1.5"
     environment:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
@@ -117,6 +139,9 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    logging: *default-logging
+    mem_limit: 1g
+    cpus: "1.0"
     environment:
       # DB connection used by your Streamlit app (db.py reads these)
       HOST_POSTG: postgres
