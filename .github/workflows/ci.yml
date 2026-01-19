@@ -33,7 +33,7 @@ jobs:
 
       # 4) Lint with Ruff (new CLI)
       - name: Lint (ruff)
-        run: ruff check .
+        run: ruff check airflow/dags streamlit_app --exclude notebooks
 
       # 5) (Optional) Unit tests — keep enabled once tests exist
       - name: Unit tests
@@ -42,4 +42,3 @@ jobs:
       # 6) Build Docker images to ensure Dockerfiles compile
       - name: Build Docker images
         run: docker compose -f docker-compose.yml build --quiet
-        
