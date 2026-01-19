@@ -1988,7 +1988,7 @@ with right:
 
     # Donut: “Legal nature — share (top)” with safe fallback to “Status share”
     with block():
-        st.markdown("#### Legal nature — share (top)")
+        st.markdown("#### Legal nature — share")
         active_set = sorted(st.session_state.uf_selected_set) if st.session_state.uf_selected_set else None
         top_nat = df_legal_nature_share(
             fq_table,
@@ -2010,7 +2010,7 @@ with right:
         else:
             st.markdown(
                 "<div style='margin:-2px 0 8px 0;color:var(--muted);font-size:12px;'>"
-                "Legal-nature dimension unavailable → showing status share."
+                
                 "</div>",
                 unsafe_allow_html=True
             )
