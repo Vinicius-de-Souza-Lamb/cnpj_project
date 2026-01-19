@@ -41,4 +41,4 @@ jobs:
 
       # 6) Build Docker images to ensure Dockerfiles compile
       - name: Build Docker images
-        run: docker compose -f docker-compose.yml build --quiet
+        run: docker compose -f compose.yaml build --quiet
