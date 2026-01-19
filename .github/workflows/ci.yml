@@ -1,6 +1,6 @@
 name: CI
 
-# Roda em todo push ou pull‑request para a branch main
+# Runs on every push or pull request targeting the main branch
 on:
   push:
     branches: ["main"]
@@ -9,34 +9,36 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest     # runner Linux que já vem com Docker
+    runs-on: ubuntu-latest # Linux runner (Docker available)
 
     steps:
-      # 1 ▸ checkout do código
-      - uses: actions/checkout@v4
+      # 1) Check out the repository
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # 2 ▸ instala Python 3.11 e habilita cache pip
-      - uses: actions/setup-python@v5
+      # 2) Set up Python 3.11 + enable pip cache
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
 
-      # 3 ▸ instala dependências (Airflow, Streamlit, linter, testes)
-      - name: Instala dependências
+      # 3) Install dependencies (Airflow DAGs, Streamlit app, linting, tests)
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r airflow/dags/requirements.txt
           pip install -r streamlit_app/requirements.txt
           pip install ruff pytest
 
-      # 4 ▸ lint com Ruff
+      # 4) Lint with Ruff (new CLI)
       - name: Lint (ruff)
-        run: ruff .
+        run: ruff check .
 
-      # 5 ▸ (opcional) testes — deixe ativo quando criá‑los
-      - name: Testes unitários
-        run: pytest -q || true   # remova “|| true” quando tiver testes de fato
+      # 5) (Optional) Unit tests — keep enabled once tests exist
+      - name: Unit tests
+        run: pytest -q || true # remove "|| true" once you have real tests
 
-      # 6 ▸ build das imagens para garantir que os Dockerfiles compilam
+      # 6) Build Docker images to ensure Dockerfiles compile
       - name: Build Docker images
-        run: docker compose -f compose.yaml build --quiet
+        run: docker compose -f docker-compose.yml build --quiet
